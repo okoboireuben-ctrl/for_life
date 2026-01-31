@@ -1,0 +1,144 @@
+/* --- General Styling --- */
+body {
+    background-color: #fdfbf7; /* Nice Cream */
+    font-family: 'Garamond', 'Times New Roman', serif;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Prevents scrollbars */
+    text-align: center;
+}
+
+/* --- Page 1 Styles --- */
+.content-wrapper {
+    z-index: 10;
+    position: relative;
+    padding: 20px;
+}
+
+.quote-box {
+    margin-bottom: 50px;
+}
+
+.quote {
+    font-size: 2.5rem; /* Reasonable size */
+    color: black;
+    max-width: 800px;
+    line-height: 1.4;
+}
+
+.author {
+    font-size: 1.2rem;
+    font-style: italic;
+    margin-top: 15px;
+    color: #444;
+}
+
+/* Flying Hearts */
+.heart {
+    position: absolute;
+    color: #d64045;
+    font-size: 24px;
+    animation: fly 6s linear forwards;
+    opacity: 0.8;
+}
+
+@keyframes fly {
+    0% { transform: translateX(0) scale(1); opacity: 0; }
+    10% { opacity: 1; }
+    80% { opacity: 1; transform: translateX(90vw) scale(1); }
+    100% { transform: translateX(100vw) scale(2); opacity: 0; } /* Burst effect */
+}
+
+/* Next Button */
+.next-btn {
+    text-decoration: none;
+    color: black;
+    border: 1px solid black;
+    padding: 10px 30px;
+    font-size: 1.2rem;
+    transition: 0.3s;
+    background: transparent;
+}
+
+.next-btn:hover {
+    background: black;
+    color: #fdfbf7;
+    cursor: pointer;
+}
+
+/* --- Page 2 Styles --- */
+.main-photo {
+    width: 300px;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.question-text {
+    font-size: 3rem;
+    color: #b30000; /* Nice shade of red */
+    margin-bottom: 30px;
+}
+
+.buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.choice-btn {
+    background-color: #b30000; /* Red Background */
+    color: black; /* Black Text */
+    font-family: 'Garamond', serif;
+    font-size: 1.5rem;
+    padding: 10px 40px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.choice-btn:hover {
+    transform: scale(1.05);
+}
+
+.error-msg {
+    color: #b30000;
+    font-size: 1.2rem;
+    height: 30px; /* Reserves space */
+    opacity: 0;
+    transition: opacity 0.5s;
+    margin-top: -20px;
+    margin-bottom: 20px;
+}
+
+/* Canvas for Fireworks */
+#celebration-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Allows clicking through canvas */
+    z-index: 99;
+}
+
+/* Shake Animation for No button */
+.shake {
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Question</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <canvas id="celebration-canvas"></canvas>
+
+    <div class="container fade-in">
+        
+        <img src="us.jpg" alt="Us" class="main-photo">
+
+        <h1 class="question-text">Clara, will you be my valentine?</h1>
+        
+        <p id="error-msg" class="error-msg">This isn't an option</p>
+
+        <div class="buttons" id="button-group">
+            <button class="choice-btn" onclick="startCelebration()">Yes</button>
+            <button class="choice-btn" id="no-btn" onclick="handleNo()">No</button>
+        </div>
+    </div>
+
+    <script>
+        let noCount = 0;
+        const noBtn = document.getElementById('no-btn');
+        const errorMsg = document.getElementById('error-msg');
+        const buttonGroup = document.getElementById('button-group');
+        const canvas = document.getElementById('celebration-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Logic for clicking "No"
+        function handleNo() {
+            noCount++;
+            errorMsg.style.opacity = '1';
+            
+            // Shake animation
+            noBtn.classList.add('shake');
+            setTimeout(() => noBtn.classList.remove('shake'), 500);
+
+            if (noCount >= 3) {
+                noBtn.style.display = 'none';
+                errorMsg.innerText = "I told you, not an option!";
+            } else {
+                // Fade message out after 2 seconds
+                setTimeout(() => {
+                    errorMsg.style.opacity = '0';
+                }, 2000);
+            }
+        }
+
+        // Logic for clicking "Yes"
+        function startCelebration() {
+            // Hide buttons
+            buttonGroup.style.display = 'none';
+            errorMsg.style.display = 'none';
+            
+            // Setup Canvas
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Start loops
+            loop();
+        }
+
+        // --- FIREWORKS & CONFETTI ENGINE ---
+        let particles = [];
+        let fireworks = [];
+
+        function createFirework() {
+            const x = Math.random() * canvas.width;
+            const y = canvas.height;
+            fireworks.push({x: x, y: y, targetY: Math.random() * (canvas.height / 2), color: `hsl(${Math.random() * 360}, 100%, 50%)`});
+        }
+
+        function createConfetti() {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: -10,
+                vx: Math.random() * 2 - 1,
+                vy: Math.random() * 3 + 2,
+                color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                type: 'confetti'
+            });
+        }
+
+        function loop() {
+            requestAnimationFrame(loop);
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Generate occasionally
+            if (Math.random() < 0.05) createFirework();
+            if (Math.random() < 0.2) createConfetti();
+
+            // Update Fireworks
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                let f = fireworks[i];
+                f.y -= 4; // Move up
+                ctx.fillStyle = f.color;
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (f.y <= f.targetY) {
+                    // Explode
+                    for (let j = 0; j < 30; j++) {
+                        particles.push({
+                            x: f.x,
+                            y: f.y,
+                            vx: Math.cos(j * 12) * Math.random() * 5,
+                            vy: Math.sin(j * 12) * Math.random() * 5,
+                            color: f.color,
+                            alpha: 1,
+                            type: 'spark'
+                        });
+                    }
+                    fireworks.splice(i, 1);
+                }
+            }
+
+            // Update Particles (Sparks & Confetti)
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                if (p.type === 'spark') {
+                    p.alpha -= 0.02;
+                    p.vy += 0.1; // gravity
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.alpha;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                    if (p.alpha <= 0) particles.splice(i, 1);
+                } else {
+                    // Confetti logic
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, 5, 5);
+                    if (p.y > canvas.height) particles.splice(i, 1);
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>
