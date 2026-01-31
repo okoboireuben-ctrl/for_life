@@ -8,6 +8,8 @@
 </head>
 <body>
 
+    <div id="heart-container"></div>
+
     <canvas id="celebration-canvas"></canvas>
 
     <div class="container fade-in">
@@ -19,12 +21,34 @@
         <p id="error-msg" class="error-msg">This isn't an option</p>
 
         <div class="buttons" id="button-group">
-            <button class="choice-btn" onclick="startCelebration()">Yes</button>
+            <button class="choice-btn" onclick="handleYes()">Yes</button>
             <button class="choice-btn" id="no-btn" onclick="handleNo()">No</button>
         </div>
     </div>
 
     <script>
+        // --- HEART LOGIC (Copied from Page 1) ---
+        const heartContainer = document.getElementById('heart-container');
+        let heartInterval; // Variable to control the timer
+
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤';
+            
+            heart.style.top = Math.random() * 100 + 'vh';
+            heart.style.left = '-50px';
+            heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            
+            heartContainer.appendChild(heart);
+            setTimeout(() => heart.remove(), 7000);
+        }
+
+        // Start hearts immediately
+        heartInterval = setInterval(createHeart, 400);
+
+
+        // --- BUTTON LOGIC ---
         let noCount = 0;
         const noBtn = document.getElementById('no-btn');
         const errorMsg = document.getElementById('error-msg');
@@ -32,12 +56,9 @@
         const canvas = document.getElementById('celebration-canvas');
         const ctx = canvas.getContext('2d');
 
-        // Logic for clicking "No"
         function handleNo() {
             noCount++;
             errorMsg.style.opacity = '1';
-            
-            // Shake animation
             noBtn.classList.add('shake');
             setTimeout(() => noBtn.classList.remove('shake'), 500);
 
@@ -45,106 +66,79 @@
                 noBtn.style.display = 'none';
                 errorMsg.innerText = "I told you, not an option!";
             } else {
-                // Fade message out after 2 seconds
-                setTimeout(() => {
-                    errorMsg.style.opacity = '0';
-                }, 2000);
+                setTimeout(() => { errorMsg.style.opacity = '0'; }, 2000);
             }
         }
 
-        // Logic for clicking "Yes"
-        function startCelebration() {
-            // Hide buttons
+        function handleYes() {
+            // 1. Hide UI
             buttonGroup.style.display = 'none';
             errorMsg.style.display = 'none';
+
+            // 2. KILL THE HEARTS
+            clearInterval(heartInterval); // Stop making new ones
+            heartContainer.innerHTML = ''; // Remove existing ones from screen instantly
             
-            // Setup Canvas
+            // 3. Setup Canvas
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             
-            // Start loops
+            // 4. Start Confetti Loop
             loop();
+            
+            // 5. Fire first burst immediately
+            shootConfetti();
+
+            // 6. Set timer to shoot again every 3 seconds
+            setInterval(shootConfetti, 3000);
         }
 
-        // --- FIREWORKS & CONFETTI ENGINE ---
+
+        // --- NEW CONFETTI PHYSICS ENGINE ---
         let particles = [];
-        let fireworks = [];
 
-        function createFirework() {
-            const x = Math.random() * canvas.width;
-            const y = canvas.height;
-            fireworks.push({x: x, y: y, targetY: Math.random() * (canvas.height / 2), color: `hsl(${Math.random() * 360}, 100%, 50%)`});
-        }
-
-        function createConfetti() {
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: -10,
-                vx: Math.random() * 2 - 1,
-                vy: Math.random() * 3 + 2,
-                color: `hsl(${Math.random() * 360}, 100%, 50%)`,
-                type: 'confetti'
-            });
+        function shootConfetti() {
+            // Create 200 particles per burst ("A lot")
+            for (let i = 0; i < 200; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width, // Spread across bottom width
+                    y: canvas.height + 10,           // Start slightly below screen
+                    vx: (Math.random() - 0.5) * 10,  // Horizontal spread (Left/Right)
+                    vy: -(Math.random() * 15 + 10),  // Upward velocity (High negative Y)
+                    gravity: 0.3,                    // Gravity to pull them back down
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: (Math.random() - 0.5) * 10
+                });
+            }
         }
 
         function loop() {
             requestAnimationFrame(loop);
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.globalCompositeOperation = 'source-over';
+            
+            // Clear canvas every frame
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Generate occasionally
-            if (Math.random() < 0.05) createFirework();
-            if (Math.random() < 0.2) createConfetti();
-
-            // Update Fireworks
-            for (let i = fireworks.length - 1; i >= 0; i--) {
-                let f = fireworks[i];
-                f.y -= 4; // Move up
-                ctx.fillStyle = f.color;
-                ctx.beginPath();
-                ctx.arc(f.x, f.y, 3, 0, Math.PI * 2);
-                ctx.fill();
-
-                if (f.y <= f.targetY) {
-                    // Explode
-                    for (let j = 0; j < 30; j++) {
-                        particles.push({
-                            x: f.x,
-                            y: f.y,
-                            vx: Math.cos(j * 12) * Math.random() * 5,
-                            vy: Math.sin(j * 12) * Math.random() * 5,
-                            color: f.color,
-                            alpha: 1,
-                            type: 'spark'
-                        });
-                    }
-                    fireworks.splice(i, 1);
-                }
-            }
-
-            // Update Particles (Sparks & Confetti)
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
                 
-                if (p.type === 'spark') {
-                    p.alpha -= 0.02;
-                    p.vy += 0.1; // gravity
-                    ctx.fillStyle = p.color;
-                    ctx.globalAlpha = p.alpha;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.globalAlpha = 1;
-                    if (p.alpha <= 0) particles.splice(i, 1);
-                } else {
-                    // Confetti logic
-                    ctx.fillStyle = p.color;
-                    ctx.fillRect(p.x, p.y, 5, 5);
-                    if (p.y > canvas.height) particles.splice(i, 1);
+                // Physics
+                p.vy += p.gravity; // Apply gravity
+                p.x += p.vx;       // Move horizontal
+                p.y += p.vy;       // Move vertical
+                p.rotation += p.rotationSpeed;
+
+                // Draw Confetti
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-4, -4, 8, 8); // Size of confetti
+                ctx.restore();
+
+                // Remove if it falls way below screen
+                if (p.y > canvas.height + 100) {
+                    particles.splice(i, 1);
                 }
             }
         }
