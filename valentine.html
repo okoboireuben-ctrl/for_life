@@ -5,6 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A Question</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* --- PAGE SPECIFIC STYLES --- */
+        
+        .question-text {
+            color: black !important;
+            font-style: italic;
+            transition: opacity 1s ease-in-out;
+            margin-bottom: 10px; /* Space between quote and sub-message */
+        }
+
+        /* Style for the new "Thank you" message */
+        .sub-message {
+            font-family: 'Garamond', serif;
+            font-size: 1.2rem;
+            color: black;
+            opacity: 0; /* Hidden initially */
+            transition: opacity 1s ease-in-out;
+            margin-top: 0;
+        }
+
+        /* Class to shrink the main quote after Yes is clicked */
+        .small-text {
+            font-size: 1.5rem !important; 
+            font-weight: normal;
+        }
+
+        /* 1. INITIAL HEART STYLE (Lighter Red - Before Click) */
+        .heart-fly {
+            position: absolute;
+            color: #d64045;
+            font-size: 24px;
+            animation: fly 6s linear forwards;
+            opacity: 0.8;
+            z-index: 1;
+        }
+
+        /* 2. PARTY HEART STYLE (Deep Red - After Click) */
+        .heart-pop {
+            font-size: 3.5rem !important;
+            position: absolute;
+            color: #990000;
+            opacity: 0; 
+            animation: appear 0.5s forwards;
+            cursor: default;
+            z-index: 1;
+        }
+
+        /* Keyframes */
+        @keyframes fly {
+            0% { transform: translateX(0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            80% { opacity: 1; transform: translateX(90vw) scale(1); }
+            100% { transform: translateX(100vw) scale(2); opacity: 0; }
+        }
+
+        @keyframes appear {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .popping {
+            animation: popEffect 0.3s ease-out forwards !important;
+        }
+
+        @keyframes popEffect {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+    </style>
 </head>
 <body>
 
@@ -12,11 +81,13 @@
 
     <canvas id="celebration-canvas"></canvas>
 
-    <div class="container fade-in">
+    <div class="container fade-in" id="main-container">
         
-        <img src="us.jpg" alt="Us" class="main-photo">
+        <img src="teddy.jpg" alt="Teddy Bear with Heart" class="main-photo">
 
-        <h1 class="question-text">Clara, will you be my valentine?</h1>
+        <h1 class="question-text" id="q-text">Clara, will you be my valentine?</h1>
+        
+        <p class="sub-message" id="sub-msg">Thank you for everything twin</p>
         
         <p id="error-msg" class="error-msg">This isn't an option</p>
 
@@ -27,41 +98,83 @@
     </div>
 
     <script>
-        // --- HEART LOGIC (Copied from Page 1) ---
         const heartContainer = document.getElementById('heart-container');
-        let heartInterval; // Variable to control the timer
+        const mainContainer = document.getElementById('main-container');
+        const questionText = document.getElementById('q-text');
+        const subMessage = document.getElementById('sub-msg');
+        const canvas = document.getElementById('celebration-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let flyingHeartInterval;
+        let poppingHeartInterval;
 
-        function createHeart() {
+        // --- STATE 1: FLYING HEARTS (Initial Load) ---
+        function createFlyingHeart() {
             const heart = document.createElement('div');
-            heart.classList.add('heart');
+            heart.classList.add('heart-fly');
             heart.innerHTML = '❤';
-            
             heart.style.top = Math.random() * 100 + 'vh';
             heart.style.left = '-50px';
             heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
-            
             heartContainer.appendChild(heart);
             setTimeout(() => heart.remove(), 7000);
         }
 
-        // Start hearts immediately
-        heartInterval = setInterval(createHeart, 400);
+        flyingHeartInterval = setInterval(createFlyingHeart, 400);
 
 
-        // --- BUTTON LOGIC ---
-        let noCount = 0;
+        // --- STATE 2: SMART POPPING HEARTS ---
+        function createPoppingHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-pop');
+            heart.innerHTML = '❤';
+            
+            const rect = mainContainer.getBoundingClientRect();
+            let validPosition = false;
+            let randomX, randomY;
+            let attempts = 0;
+
+            while (!validPosition && attempts < 10) {
+                const xPercent = Math.random() * 90; 
+                const yPercent = Math.random() * 90; 
+                const xPx = (xPercent / 100) * window.innerWidth;
+                const yPx = (yPercent / 100) * window.innerHeight;
+
+                if (xPx > rect.left - 50 && xPx < rect.right + 50 && 
+                    yPx > rect.top - 50 && yPx < rect.bottom + 50) {
+                    validPosition = false;
+                } else {
+                    validPosition = true;
+                    randomX = xPercent;
+                    randomY = yPercent;
+                }
+                attempts++;
+            }
+            if (!validPosition) { randomX = 5; randomY = 5; }
+
+            heart.style.left = randomX + 'vw';
+            heart.style.top = randomY + 'vh';
+            heartContainer.appendChild(heart);
+
+            const explodeDelay = Math.random() * 4000 + 1000;
+            setTimeout(() => {
+                heart.classList.add('popping');
+                setTimeout(() => heart.remove(), 300);
+            }, explodeDelay);
+        }
+
+
+        // --- BUTTON INTERACTION ---
         const noBtn = document.getElementById('no-btn');
         const errorMsg = document.getElementById('error-msg');
         const buttonGroup = document.getElementById('button-group');
-        const canvas = document.getElementById('celebration-canvas');
-        const ctx = canvas.getContext('2d');
+        let noCount = 0;
 
         function handleNo() {
             noCount++;
             errorMsg.style.opacity = '1';
             noBtn.classList.add('shake');
             setTimeout(() => noBtn.classList.remove('shake'), 500);
-
             if (noCount >= 3) {
                 noBtn.style.display = 'none';
                 errorMsg.innerText = "I told you, not an option!";
@@ -71,41 +184,52 @@
         }
 
         function handleYes() {
-            // 1. Hide UI
+            // 1. Hide Buttons
             buttonGroup.style.display = 'none';
             errorMsg.style.display = 'none';
 
-            // 2. KILL THE HEARTS
-            clearInterval(heartInterval); // Stop making new ones
-            heartContainer.innerHTML = ''; // Remove existing ones from screen instantly
-            
-            // 3. Setup Canvas
+            // 2. STOP Flying Hearts & Clear Screen
+            clearInterval(flyingHeartInterval);
+            heartContainer.innerHTML = ''; 
+
+            // 3. EXPLODE CONFETTI (Massive Burst - 600 particles)
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            
-            // 4. Start Confetti Loop
-            loop();
-            
-            // 5. Fire first burst immediately
-            shootConfetti();
+            loop(); 
+            shootConfetti(); 
 
-            // 6. Set timer to shoot again every 3 seconds
-            setInterval(shootConfetti, 3000);
+            // 4. CHANGE TEXT
+            questionText.style.opacity = '0'; // Fade out
+            
+            setTimeout(() => {
+                // Change main quote
+                questionText.innerText = "“True love stories never have endings.” – Richard Bach";
+                questionText.classList.add('small-text'); 
+                
+                // Fade both in
+                questionText.style.opacity = '1'; 
+                subMessage.style.opacity = '1'; // Show "Thank you" message
+            }, 1000);
+
+            // 5. START HEARTS (Delay reduced to 1 second)
+            setTimeout(() => {
+                poppingHeartInterval = setInterval(createPoppingHeart, 300);
+            }, 1000);
         }
 
 
-        // --- NEW CONFETTI PHYSICS ENGINE ---
+        // --- CONFETTI ENGINE ---
         let particles = [];
 
         function shootConfetti() {
-            // Create 200 particles per burst ("A lot")
-            for (let i = 0; i < 200; i++) {
+            // MASSIVE BURST: 600 particles
+            for (let i = 0; i < 600; i++) {
                 particles.push({
-                    x: Math.random() * canvas.width, // Spread across bottom width
-                    y: canvas.height + 10,           // Start slightly below screen
-                    vx: (Math.random() - 0.5) * 10,  // Horizontal spread (Left/Right)
-                    vy: -(Math.random() * 15 + 10),  // Upward velocity (High negative Y)
-                    gravity: 0.3,                    // Gravity to pull them back down
+                    x: Math.random() * canvas.width, 
+                    y: canvas.height + 10,           
+                    vx: (Math.random() - 0.5) * 10,  
+                    vy: -(Math.random() * 15 + 10),  
+                    gravity: 0.3,                    
                     color: `hsl(${Math.random() * 360}, 100%, 50%)`,
                     rotation: Math.random() * 360,
                     rotationSpeed: (Math.random() - 0.5) * 10
@@ -115,28 +239,22 @@
 
         function loop() {
             requestAnimationFrame(loop);
-            
-            // Clear canvas every frame
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
-                
-                // Physics
-                p.vy += p.gravity; // Apply gravity
-                p.x += p.vx;       // Move horizontal
-                p.y += p.vy;       // Move vertical
+                p.vy += p.gravity;
+                p.x += p.vx;
+                p.y += p.vy;
                 p.rotation += p.rotationSpeed;
 
-                // Draw Confetti
                 ctx.save();
                 ctx.translate(p.x, p.y);
                 ctx.rotate(p.rotation * Math.PI / 180);
                 ctx.fillStyle = p.color;
-                ctx.fillRect(-4, -4, 8, 8); // Size of confetti
+                ctx.fillRect(-4, -4, 8, 8); 
                 ctx.restore();
 
-                // Remove if it falls way below screen
                 if (p.y > canvas.height + 100) {
                     particles.splice(i, 1);
                 }
